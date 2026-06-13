@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: fifa-predictor-api
+    runtime: docker
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fifa-db
+          property: connectionURI
+      - key: DATABASE_USERNAME
+        fromDatabase:
+          name: fifa-db
+          property: user
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: fifa-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: https://your-frontend.vercel.app
+
+databases:
+  - name: fifa-db
+    plan: free
+    databaseName: fifadb
+    user: fifauser

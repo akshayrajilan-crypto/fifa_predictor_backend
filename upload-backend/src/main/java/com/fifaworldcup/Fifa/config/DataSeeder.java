@@ -1,0 +1,294 @@
+package com.fifaworldcup.Fifa.config;
+
+import com.fifaworldcup.Fifa.model.Match;
+import com.fifaworldcup.Fifa.model.MatchGoalScorer;
+import com.fifaworldcup.Fifa.model.Team;
+import com.fifaworldcup.Fifa.model.User;
+import com.fifaworldcup.Fifa.repository.MatchGoalScorerRepository;
+import com.fifaworldcup.Fifa.repository.MatchRepository;
+import com.fifaworldcup.Fifa.repository.TeamRepository;
+import com.fifaworldcup.Fifa.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+
+@Component
+@Order(1)
+@RequiredArgsConstructor
+public class DataSeeder implements CommandLineRunner {
+
+    private final TeamRepository teamRepository;
+    private final MatchRepository matchRepository;
+    private final MatchGoalScorerRepository matchGoalScorerRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    @org.springframework.beans.factory.annotation.Value("${app.seed-data:true}")
+    private boolean seedData;
+
+    @Override
+    public void run(String... args) {
+        if (!seedData) return;
+        if (teamRepository.count() > 0) return; // Already seeded
+
+        // Create admin user
+        userRepository.save(User.builder()
+                .username("admin")
+                .email("admin@fifa2026.com")
+                .password(passwordEncoder.encode("admin123"))
+                .role(User.Role.ADMIN)
+                .build());
+
+        // ============================================================
+        // FIFA WORLD CUP 2026 - ALL 48 TEAMS (12 Groups of 4)
+        // ============================================================
+
+        // Group A
+        Team mexico = createTeam("Mexico", "A", "mx");
+        Team southAfrica = createTeam("South Africa", "A", "za");
+        Team southKorea = createTeam("South Korea", "A", "kr");
+        Team czechia = createTeam("Czechia", "A", "cz");
+
+        // Group B
+        Team canada = createTeam("Canada", "B", "ca");
+        Team switzerland = createTeam("Switzerland", "B", "ch");
+        Team qatar = createTeam("Qatar", "B", "qa");
+        Team bosnia = createTeam("Bosnia and Herzegovina", "B", "ba");
+
+        // Group C
+        Team brazil = createTeam("Brazil", "C", "br");
+        Team morocco = createTeam("Morocco", "C", "ma");
+        Team haiti = createTeam("Haiti", "C", "ht");
+        Team scotland = createTeam("Scotland", "C", "gb-sct");
+
+        // Group D
+        Team usa = createTeam("USA", "D", "us");
+        Team paraguay = createTeam("Paraguay", "D", "py");
+        Team australia = createTeam("Australia", "D", "au");
+        Team turkiye = createTeam("Türkiye", "D", "tr");
+
+        // Group E
+        Team germany = createTeam("Germany", "E", "de");
+        Team curacao = createTeam("Curaçao", "E", "cw");
+        Team ivoryCoast = createTeam("Ivory Coast", "E", "ci");
+        Team ecuador = createTeam("Ecuador", "E", "ec");
+
+        // Group F
+        Team netherlands = createTeam("Netherlands", "F", "nl");
+        Team japan = createTeam("Japan", "F", "jp");
+        Team sweden = createTeam("Sweden", "F", "se");
+        Team tunisia = createTeam("Tunisia", "F", "tn");
+
+        // Group G
+        Team belgium = createTeam("Belgium", "G", "be");
+        Team egypt = createTeam("Egypt", "G", "eg");
+        Team iran = createTeam("Iran", "G", "ir");
+        Team newZealand = createTeam("New Zealand", "G", "nz");
+
+        // Group H
+        Team spain = createTeam("Spain", "H", "es");
+        Team capeVerde = createTeam("Cape Verde", "H", "cv");
+        Team saudiArabia = createTeam("Saudi Arabia", "H", "sa");
+        Team uruguay = createTeam("Uruguay", "H", "uy");
+
+        // Group I
+        Team france = createTeam("France", "I", "fr");
+        Team senegal = createTeam("Senegal", "I", "sn");
+        Team norway = createTeam("Norway", "I", "no");
+        Team iraq = createTeam("Iraq", "I", "iq");
+
+        // Group J
+        Team argentina = createTeam("Argentina", "J", "ar");
+        Team algeria = createTeam("Algeria", "J", "dz");
+        Team austria = createTeam("Austria", "J", "at");
+        Team jordan = createTeam("Jordan", "J", "jo");
+
+        // Group K
+        Team portugal = createTeam("Portugal", "K", "pt");
+        Team drCongo = createTeam("DR Congo", "K", "cd");
+        Team uzbekistan = createTeam("Uzbekistan", "K", "uz");
+        Team colombia = createTeam("Colombia", "K", "co");
+
+        // Group L
+        Team england = createTeam("England", "L", "gb-eng");
+        Team croatia = createTeam("Croatia", "L", "hr");
+        Team ghana = createTeam("Ghana", "L", "gh");
+        Team panama = createTeam("Panama", "L", "pa");
+
+        // ============================================================
+        // MATCHDAY 1 (June 11 - 17) — All times ET
+        // ============================================================
+
+        // June 11
+        Match mex_sa = createCompletedMatch(mexico, southAfrica, "2026-06-11T15:00", "Mexico City Stadium (Estadio Azteca)", "A", 2, 0);
+        seedGoalScorer(mex_sa, "Julián Quiñones", 9, true, false, false);
+        seedGoalScorer(mex_sa, "Raúl Jiménez", 77, false, false, true);
+
+        Match kor_cze = createCompletedMatch(southKorea, czechia, "2026-06-11T22:00", "Guadalajara Stadium (Estadio Akron)", "A", 2, 1);
+        seedGoalScorer(kor_cze, "Adam Hložek", 56, true, false, false);
+        seedGoalScorer(kor_cze, "Hwang In-beom", 68, false, false, false);
+        seedGoalScorer(kor_cze, "Oh Hyeon-gyu", 82, false, false, false);
+
+        // June 12
+        createMatch(canada, bosnia, "2026-06-12T15:00", "Toronto Stadium (BMO Field)", "B");
+        createMatch(usa, paraguay, "2026-06-12T21:00", "Los Angeles Stadium (SoFi)", "D");
+
+        // June 13
+        createMatch(qatar, switzerland, "2026-06-13T15:00", "San Francisco Bay Area Stadium (Levi's)", "B");
+        createMatch(brazil, morocco, "2026-06-13T18:00", "New York New Jersey Stadium (MetLife)", "C");
+        createMatch(haiti, scotland, "2026-06-13T21:00", "Boston Stadium (Gillette)", "C");
+
+        // June 14
+        createMatch(australia, turkiye, "2026-06-14T00:00", "BC Place, Vancouver", "D");
+        createMatch(germany, curacao, "2026-06-14T13:00", "Houston Stadium (NRG)", "E");
+        createMatch(netherlands, japan, "2026-06-14T16:00", "Dallas Stadium (AT&T)", "F");
+        createMatch(ivoryCoast, ecuador, "2026-06-14T19:00", "Philadelphia Stadium (Lincoln Financial)", "E");
+        createMatch(sweden, tunisia, "2026-06-14T22:00", "Monterrey Stadium (Estadio BBVA)", "F");
+
+        // June 15
+        createMatch(spain, capeVerde, "2026-06-15T12:00", "Atlanta Stadium (Mercedes-Benz)", "H");
+        createMatch(belgium, egypt, "2026-06-15T15:00", "Seattle Stadium (Lumen Field)", "G");
+        createMatch(saudiArabia, uruguay, "2026-06-15T18:00", "Miami Stadium (Hard Rock)", "H");
+        createMatch(iran, newZealand, "2026-06-15T21:00", "Los Angeles Stadium (SoFi)", "G");
+
+        // June 16
+        createMatch(france, senegal, "2026-06-16T15:00", "New York New Jersey Stadium (MetLife)", "I");
+        createMatch(iraq, norway, "2026-06-16T18:00", "Boston Stadium (Gillette)", "I");
+        createMatch(argentina, algeria, "2026-06-16T21:00", "Kansas City Stadium (Arrowhead)", "J");
+
+        // June 17
+        createMatch(austria, jordan, "2026-06-17T00:00", "San Francisco Bay Area Stadium (Levi's)", "J");
+        createMatch(portugal, drCongo, "2026-06-17T13:00", "Houston Stadium (NRG)", "K");
+        createMatch(england, croatia, "2026-06-17T16:00", "Dallas Stadium (AT&T)", "L");
+        createMatch(ghana, panama, "2026-06-17T19:00", "Toronto Stadium (BMO Field)", "L");
+        createMatch(uzbekistan, colombia, "2026-06-17T22:00", "Mexico City Stadium (Estadio Azteca)", "K");
+
+        // ============================================================
+        // MATCHDAY 2 (June 18 - 23)
+        // ============================================================
+
+        // June 18
+        createMatch(czechia, southAfrica, "2026-06-18T12:00", "Atlanta Stadium (Mercedes-Benz)", "A");
+        createMatch(switzerland, bosnia, "2026-06-18T15:00", "Los Angeles Stadium (SoFi)", "B");
+        createMatch(canada, qatar, "2026-06-18T18:00", "BC Place, Vancouver", "B");
+        createMatch(mexico, southKorea, "2026-06-18T21:00", "Guadalajara Stadium (Estadio Akron)", "A");
+
+        // June 19
+        createMatch(turkiye, paraguay, "2026-06-19T00:00", "San Francisco Bay Area Stadium (Levi's)", "D");
+        createMatch(usa, australia, "2026-06-19T15:00", "Seattle Stadium (Lumen Field)", "D");
+        createMatch(scotland, morocco, "2026-06-19T18:00", "Boston Stadium (Gillette)", "C");
+        createMatch(brazil, haiti, "2026-06-19T20:30", "Philadelphia Stadium (Lincoln Financial)", "C");
+
+        // June 20
+        createMatch(netherlands, sweden, "2026-06-20T13:00", "Houston Stadium (NRG)", "F");
+        createMatch(germany, ivoryCoast, "2026-06-20T16:00", "Toronto Stadium (BMO Field)", "E");
+        createMatch(ecuador, curacao, "2026-06-20T20:00", "Kansas City Stadium (Arrowhead)", "E");
+
+        // June 21
+        createMatch(tunisia, japan, "2026-06-21T00:00", "Monterrey Stadium (Estadio BBVA)", "F");
+        createMatch(spain, saudiArabia, "2026-06-21T12:00", "Atlanta Stadium (Mercedes-Benz)", "H");
+        createMatch(belgium, iran, "2026-06-21T15:00", "Los Angeles Stadium (SoFi)", "G");
+        createMatch(uruguay, capeVerde, "2026-06-21T18:00", "Miami Stadium (Hard Rock)", "H");
+        createMatch(newZealand, egypt, "2026-06-21T21:00", "BC Place, Vancouver", "G");
+
+        // June 22
+        createMatch(argentina, austria, "2026-06-22T13:00", "Dallas Stadium (AT&T)", "J");
+        createMatch(france, iraq, "2026-06-22T17:00", "Philadelphia Stadium (Lincoln Financial)", "I");
+        createMatch(norway, senegal, "2026-06-22T20:00", "New York New Jersey Stadium (MetLife)", "I");
+        createMatch(jordan, algeria, "2026-06-22T23:00", "San Francisco Bay Area Stadium (Levi's)", "J");
+
+        // June 23
+        createMatch(portugal, uzbekistan, "2026-06-23T13:00", "Houston Stadium (NRG)", "K");
+        createMatch(england, ghana, "2026-06-23T16:00", "Boston Stadium (Gillette)", "L");
+        createMatch(panama, croatia, "2026-06-23T19:00", "Toronto Stadium (BMO Field)", "L");
+        createMatch(colombia, drCongo, "2026-06-23T22:00", "Guadalajara Stadium (Estadio Akron)", "K");
+
+        // ============================================================
+        // MATCHDAY 3 (June 24 - 27) - Simultaneous kickoffs per group
+        // ============================================================
+
+        // June 24
+        createMatch(switzerland, canada, "2026-06-24T15:00", "BC Place, Vancouver", "B");
+        createMatch(bosnia, qatar, "2026-06-24T15:00", "Seattle Stadium (Lumen Field)", "B");
+        createMatch(scotland, brazil, "2026-06-24T18:00", "Miami Stadium (Hard Rock)", "C");
+        createMatch(morocco, haiti, "2026-06-24T18:00", "Atlanta Stadium (Mercedes-Benz)", "C");
+        createMatch(czechia, mexico, "2026-06-24T21:00", "Mexico City Stadium (Estadio Azteca)", "A");
+        createMatch(southAfrica, southKorea, "2026-06-24T21:00", "Monterrey Stadium (Estadio BBVA)", "A");
+
+        // June 25
+        createMatch(curacao, ivoryCoast, "2026-06-25T16:00", "Philadelphia Stadium (Lincoln Financial)", "E");
+        createMatch(ecuador, germany, "2026-06-25T16:00", "New York New Jersey Stadium (MetLife)", "E");
+        createMatch(japan, sweden, "2026-06-25T19:00", "Dallas Stadium (AT&T)", "F");
+        createMatch(tunisia, netherlands, "2026-06-25T19:00", "Kansas City Stadium (Arrowhead)", "F");
+        createMatch(turkiye, usa, "2026-06-25T22:00", "Los Angeles Stadium (SoFi)", "D");
+        createMatch(paraguay, australia, "2026-06-25T22:00", "San Francisco Bay Area Stadium (Levi's)", "D");
+
+        // June 26
+        createMatch(norway, france, "2026-06-26T15:00", "Boston Stadium (Gillette)", "I");
+        createMatch(senegal, iraq, "2026-06-26T15:00", "Toronto Stadium (BMO Field)", "I");
+        createMatch(capeVerde, saudiArabia, "2026-06-26T20:00", "Houston Stadium (NRG)", "H");
+        createMatch(uruguay, spain, "2026-06-26T20:00", "Guadalajara Stadium (Estadio Akron)", "H");
+        createMatch(egypt, iran, "2026-06-26T23:00", "Seattle Stadium (Lumen Field)", "G");
+        createMatch(newZealand, belgium, "2026-06-26T23:00", "BC Place, Vancouver", "G");
+
+        // June 27
+        createMatch(panama, england, "2026-06-27T17:00", "New York New Jersey Stadium (MetLife)", "L");
+        createMatch(croatia, ghana, "2026-06-27T17:00", "Philadelphia Stadium (Lincoln Financial)", "L");
+        createMatch(colombia, portugal, "2026-06-27T19:30", "Miami Stadium (Hard Rock)", "K");
+        createMatch(drCongo, uzbekistan, "2026-06-27T19:30", "Atlanta Stadium (Mercedes-Benz)", "K");
+        createMatch(algeria, austria, "2026-06-27T22:00", "Kansas City Stadium (Arrowhead)", "J");
+        createMatch(jordan, argentina, "2026-06-27T22:00", "Dallas Stadium (AT&T)", "J");
+
+        System.out.println("✅ Database seeded: 48 teams, 72 group stage matches, admin user created.");
+        System.out.println("   Results loaded: Mexico 2-0 South Africa, South Korea 2-1 Czechia");
+    }
+
+    private Team createTeam(String name, String group, String countryCode) {
+        return teamRepository.save(Team.builder()
+                .name(name)
+                .group(group)
+                .flagUrl("https://flagcdn.com/48x36/" + countryCode + ".png")
+                .build());
+    }
+
+    private void createMatch(Team team1, Team team2, String dateTime, String venue, String group) {
+        matchRepository.save(Match.builder()
+                .team1(team1)
+                .team2(team2)
+                .matchDateTime(LocalDateTime.parse(dateTime))
+                .venue(venue)
+                .stage(Match.Stage.GROUP)
+                .group(group)
+                .status(Match.MatchStatus.UPCOMING)
+                .build());
+    }
+
+    private Match createCompletedMatch(Team team1, Team team2, String dateTime, String venue, String group, int score1, int score2) {
+        return matchRepository.save(Match.builder()
+                .team1(team1)
+                .team2(team2)
+                .matchDateTime(LocalDateTime.parse(dateTime))
+                .venue(venue)
+                .stage(Match.Stage.GROUP)
+                .group(group)
+                .team1Score(score1)
+                .team2Score(score2)
+                .status(Match.MatchStatus.COMPLETED)
+                .build());
+    }
+
+    private void seedGoalScorer(Match match, String playerName, int minute, boolean isFirst, boolean isOwnGoal, boolean isPenalty) {
+        matchGoalScorerRepository.save(MatchGoalScorer.builder()
+                .match(match)
+                .playerName(playerName)
+                .minute(minute)
+                .firstGoal(isFirst)
+                .ownGoal(isOwnGoal)
+                .penalty(isPenalty)
+                .build());
+    }
+}

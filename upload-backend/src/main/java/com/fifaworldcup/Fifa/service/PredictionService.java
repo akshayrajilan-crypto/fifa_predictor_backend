@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -33,7 +34,7 @@ public class PredictionService {
                 .orElseThrow(() -> new RuntimeException("Match not found"));
 
         // Check if prediction is locked (match has started)
-        if (match.getMatchDateTime().isBefore(LocalDateTime.now())) {
+        if (match.getMatchDateTime().isBefore(LocalDateTime.now(ZoneId.of("Asia/Kolkata")))) {
             throw new RuntimeException("Predictions are locked. Match has already started.");
         }
 
@@ -59,8 +60,40 @@ public class PredictionService {
         Match match = matchRepository.findById(request.getMatchId())
                 .orElseThrow(() -> new RuntimeException("Match not found"));
 
-        if (match.getMatchDateTime().isBefore(LocalDateTime.now())) {
+        if (match.getMatchDateTime().isBefore(LocalDateTime.now(ZoneId.of("Asia/Kolkata")))) {
             throw new RuntimeException("Predictions are locked. Match has already started.");
+        }
+
+        // Validate goal scorer count against predicted score
+        Prediction scorePrediction = predictionRepository.findByUserAndMatch(user, match)
+                .orElseThrow(() -> new RuntimeException("You must predict the score before picking goal scorers"));
+
+        int predictedTeam1Goals = scorePrediction.getPredictedTeam1Score();
+        int predictedTeam2Goals = scorePrediction.getPredictedTeam2Score();
+        int totalPredictedGoals = predictedTeam1Goals + predictedTeam2Goals;
+
+        // Count picks per team
+        long team1PickCount = 0;
+        for (Long playerId : request.getPlayerIds()) {
+            Player player = playerRepository.findById(playerId)
+                    .orElseThrow(() -> new RuntimeException("Player not found: " + playerId));
+            if (player.getTeam().getId().equals(match.getTeam1().getId())) {
+                team1PickCount++;
+            }
+        }
+        long team2PickCount = request.getPlayerIds().size() - team1PickCount;
+
+        if (request.getPlayerIds().size() > totalPredictedGoals) {
+            throw new RuntimeException("Goal scorer picks (" + request.getPlayerIds().size()
+                    + ") cannot exceed total predicted goals (" + totalPredictedGoals + ")");
+        }
+        if (team1PickCount > predictedTeam1Goals) {
+            throw new RuntimeException(match.getTeam1().getName() + " goal scorer picks (" + team1PickCount
+                    + ") cannot exceed predicted " + match.getTeam1().getName() + " goals (" + predictedTeam1Goals + ")");
+        }
+        if (team2PickCount > predictedTeam2Goals) {
+            throw new RuntimeException(match.getTeam2().getName() + " goal scorer picks (" + team2PickCount
+                    + ") cannot exceed predicted " + match.getTeam2().getName() + " goals (" + predictedTeam2Goals + ")");
         }
 
         // Remove existing goal scorer predictions for this user + match
@@ -158,7 +191,7 @@ public class PredictionService {
     private static final LocalDateTime TOURNAMENT_START = LocalDateTime.of(2026, 6, 11, 0, 0);
 
     private void checkTournamentPredictionLock() {
-        if (LocalDateTime.now().isAfter(TOURNAMENT_START)) {
+        if (LocalDateTime.now(ZoneId.of("Asia/Kolkata")).isAfter(TOURNAMENT_START)) {
             throw new RuntimeException("Tournament predictions are locked. The World Cup has started.");
         }
     }
@@ -185,7 +218,7 @@ public class PredictionService {
             result.put("worldCupWinner", java.util.Map.of("teamName", p.getTeam().getName(), "teamId", p.getTeam().getId()))
         );
 
-        result.put("locked", LocalDateTime.now().isAfter(TOURNAMENT_START));
+        result.put("locked", LocalDateTime.now(ZoneId.of("Asia/Kolkata")).isAfter(TOURNAMENT_START));
 
         return result;
     }
@@ -260,7 +293,7 @@ public class PredictionService {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new RuntimeException("Player not found"));
 
-        if (match.getMatchDateTime().isBefore(LocalDateTime.now())) {
+        if (match.getMatchDateTime().isBefore(LocalDateTime.now(ZoneId.of("Asia/Kolkata")))) {
             throw new RuntimeException("Predictions are locked. Match has already started.");
         }
 
@@ -281,7 +314,7 @@ public class PredictionService {
                 .orElseThrow(() -> new RuntimeException("Team not found"));
 
         // Check if group stage is over
-        if (LocalDateTime.now().isAfter(GROUP_STAGE_END)) {
+        if (LocalDateTime.now(ZoneId.of("Asia/Kolkata")).isAfter(GROUP_STAGE_END)) {
             throw new RuntimeException("World Cup Winner prediction is locked after group stage ends (June 27).");
         }
 

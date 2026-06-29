@@ -29,6 +29,7 @@ public class FootballDataService {
     private final GoalScorerPredictionRepository goalScorerPredictionRepository;
     private final MatchGoalScorerRepository matchGoalScorerRepository;
     private final UserRepository userRepository;
+    private final KnockoutAdvancementService knockoutAdvancementService;
 
     @Value("${app.football-api.token:}")
     private String apiToken;
@@ -110,6 +111,11 @@ public class FootballDataService {
                     matchRepository.save(match);
 
                     log.info("✅ Match updated: {} {} - {} {}", team1Name, homeScore, awayScore, team2Name);
+
+                    // Advance winner to next round if this is a knockout match
+                    if (match.getStage() != Match.Stage.GROUP) {
+                        knockoutAdvancementService.advanceWinner(match);
+                    }
 
                     // Calculate score prediction points
                     calculateScorePoints(match);

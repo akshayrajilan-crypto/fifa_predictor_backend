@@ -52,8 +52,8 @@ public class MatchResultScheduler {
 
         for (Match match : matchesToCheck) {
             log.info("   Fetching result: {} vs {} (kicked off {})",
-                    match.getTeam1().getName(),
-                    match.getTeam2().getName(),
+                    match.getTeam1() != null ? match.getTeam1().getName() : "TBD",
+                    match.getTeam2() != null ? match.getTeam2().getName() : "TBD",
                     match.getMatchDateTime());
             footballDataService.fetchAndUpdateMatchResult(match.getId());
         }

@@ -18,6 +18,7 @@ public class AdminService {
     private final GoalScorerPredictionRepository goalScorerPredictionRepository;
     private final MotmPredictionRepository motmPredictionRepository;
     private final UserRepository userRepository;
+    private final KnockoutAdvancementService knockoutAdvancementService;
 
     private static final int MATCH_WINNER_POINTS = 1;       // Correct result (win/draw)
     private static final int EXACT_SCORE_POINTS = 2;        // Exact score (bonus on top of match winner)
@@ -37,6 +38,11 @@ public class AdminService {
         match.setTeam2Score(request.getTeam2Score());
         match.setStatus(Match.MatchStatus.COMPLETED);
         matchRepository.save(match);
+
+        // Advance winner to next round if this is a knockout match
+        if (match.getStage() != Match.Stage.GROUP) {
+            knockoutAdvancementService.advanceWinner(match);
+        }
 
         calculateScorePoints(match);
     }

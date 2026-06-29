@@ -12,4 +12,5 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     List<Match> findByGroupOrderByMatchDateTimeAsc(String group);
     List<Match> findAllByOrderByMatchDateTimeAsc();
     List<Match> findByMatchDateTimeBetween(LocalDateTime start, LocalDateTime end);
+    List<Match> findByStageAndGroupAndStatus(Match.Stage stage, String group, Match.MatchStatus status);
 }

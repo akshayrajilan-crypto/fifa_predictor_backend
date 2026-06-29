@@ -18,11 +18,11 @@ public class Match {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "team1_id", nullable = false)
+    @JoinColumn(name = "team1_id", nullable = true)
     private Team team1;
 
     @ManyToOne
-    @JoinColumn(name = "team2_id", nullable = false)
+    @JoinColumn(name = "team2_id", nullable = true)
     private Team team2;
 
     private LocalDateTime matchDateTime;

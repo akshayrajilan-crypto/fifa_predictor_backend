@@ -299,29 +299,39 @@ public class FootballDataService {
             String actualResult = getResult(actualTeam1, actualTeam2);
             String predictedResult = getResult(predictedTeam1, predictedTeam2);
 
-            if (actualResult.equals(predictedResult)) {
-                points += MATCH_WINNER_POINTS;  // +1 for correct result
-
-                // Exact score bonus
-                if (predictedTeam1 == actualTeam1 && predictedTeam2 == actualTeam2) {
-                    points += EXACT_SCORE_POINTS;  // +2 for exact score (total +3)
-                }
-            }
-
-            // Knockout penalty winner bonus: +1 if user correctly predicted penalty winner
-            if (match.getStage() != Match.Stage.GROUP
+            boolean isKnockoutPenalty = match.getStage() != Match.Stage.GROUP
                     && actualTeam1 == actualTeam2
-                    && match.getTeam1PenaltyScore() != null
-                    && prediction.getPenaltyWinnerTeamId() != null) {
-                // Determine actual penalty winner team ID
-                Long actualPenWinnerTeamId = null;
-                if (match.getTeam1PenaltyScore() > match.getTeam2PenaltyScore()) {
-                    actualPenWinnerTeamId = match.getTeam1().getId();
-                } else if (match.getTeam2PenaltyScore() > match.getTeam1PenaltyScore()) {
-                    actualPenWinnerTeamId = match.getTeam2().getId();
+                    && match.getTeam1PenaltyScore() != null;
+
+            if (isKnockoutPenalty) {
+                // Knockout match decided by penalties:
+                // +1 for correct penalty winner (replaces "correct result" point)
+                // +2 for exact score
+                if (predictedTeam1 == actualTeam1 && predictedTeam2 == actualTeam2) {
+                    points += EXACT_SCORE_POINTS;  // +2 for exact score
                 }
-                if (actualPenWinnerTeamId != null && actualPenWinnerTeamId.equals(prediction.getPenaltyWinnerTeamId())) {
-                    points += MATCH_WINNER_POINTS;  // +1 for correct penalty winner
+                // Penalty winner bonus
+                if (prediction.getPenaltyWinnerTeamId() != null) {
+                    Long actualPenWinnerTeamId = null;
+                    if (match.getTeam1PenaltyScore() > match.getTeam2PenaltyScore()) {
+                        actualPenWinnerTeamId = match.getTeam1().getId();
+                    } else if (match.getTeam2PenaltyScore() > match.getTeam1PenaltyScore()) {
+                        actualPenWinnerTeamId = match.getTeam2().getId();
+                    }
+                    if (actualPenWinnerTeamId != null && actualPenWinnerTeamId.equals(prediction.getPenaltyWinnerTeamId())) {
+                        points += MATCH_WINNER_POINTS;  // +1 for correct penalty winner
+                    }
+                }
+            } else {
+                // Regular match (group stage or knockout without penalties):
+                // +1 for correct result, +2 for exact score
+                if (actualResult.equals(predictedResult)) {
+                    points += MATCH_WINNER_POINTS;  // +1 for correct result
+
+                    // Exact score bonus
+                    if (predictedTeam1 == actualTeam1 && predictedTeam2 == actualTeam2) {
+                        points += EXACT_SCORE_POINTS;  // +2 for exact score (total +3)
+                    }
                 }
             }
 

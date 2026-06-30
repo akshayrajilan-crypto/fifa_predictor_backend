@@ -129,7 +129,7 @@ public class FootballDataService {
                         team2Score = homeScore;
                     }
 
-                    // For knockout matches decided by penalties, give +1 to winner for advancement
+                    // For knockout matches decided by penalties, store penalty scores for display
                     String duration = score.get("duration") != null ? (String) score.get("duration") : "REGULAR";
                     if ("PENALTY_SHOOTOUT".equals(duration) && match.getStage() != Match.Stage.GROUP) {
                         @SuppressWarnings("unchecked")
@@ -139,20 +139,14 @@ public class FootballDataService {
                             int penAway = ((Number) penalties.get("away")).intValue();
                             int penTeam1 = normalOrder ? penHome : penAway;
                             int penTeam2 = normalOrder ? penAway : penHome;
-                            // Store penalty scores for UI display
+                            // Store penalty scores for UI display and advancement logic
                             match.setTeam1PenaltyScore(penTeam1);
                             match.setTeam2PenaltyScore(penTeam2);
-                            // Give +1 to the penalty winner so advanceWinner can determine the winner
-                            if (penTeam1 > penTeam2) {
-                                team1Score = team1Score + 1;
-                            } else if (penTeam2 > penTeam1) {
-                                team2Score = team2Score + 1;
-                            }
                             log.info("   Penalty shootout: {} ({}) - ({}) {}", team1Name, penTeam1, penTeam2, team2Name);
                         }
                     }
 
-                    // Update match result
+                    // Update match result — store the REAL score (no +1 hack)
                     match.setTeam1Score(team1Score);
                     match.setTeam2Score(team2Score);
                     match.setStatus(Match.MatchStatus.COMPLETED);
@@ -265,19 +259,27 @@ public class FootballDataService {
 
             if (actualGoals > 0) {
                 int predictedGoals = prediction.getPredictedGoals();
-                int goalsToReward = Math.min(actualGoals, predictedGoals);
-                points = GOAL_SCORER_POINTS * goalsToReward;
+                int correctGoals = Math.min(actualGoals, predictedGoals);
+                int wrongGoals = predictedGoals - correctGoals;
+                points = (GOAL_SCORER_POINTS * correctGoals) - (GOAL_SCORER_POINTS * wrongGoals);
+            } else {
+                // Player didn't score at all — deduct for each predicted goal
+                int predictedGoals = prediction.getPredictedGoals();
+                points = -(GOAL_SCORER_POINTS * predictedGoals);
             }
 
             prediction.setPointsEarned(points);
             prediction.setScored(true);
             goalScorerPredictionRepository.save(prediction);
 
-            if (points > 0) {
+            if (points != 0) {
                 User user = prediction.getUser();
                 user.setTotalPoints(user.getTotalPoints() + points);
                 userRepository.save(user);
-                log.info("   +{} pts to {} (predicted: {})", points, user.getUsername(), prediction.getPlayer().getName());
+                log.info("   {} pts to {} (predicted: {} x{}, actual: {})",
+                        points > 0 ? "+" + points : points,
+                        user.getUsername(), prediction.getPlayer().getName(),
+                        prediction.getPredictedGoals(), actualGoals);
             }
         }
     }
@@ -297,12 +299,39 @@ public class FootballDataService {
             String actualResult = getResult(actualTeam1, actualTeam2);
             String predictedResult = getResult(predictedTeam1, predictedTeam2);
 
-            if (actualResult.equals(predictedResult)) {
-                points += MATCH_WINNER_POINTS;  // +1 for correct result
+            boolean isKnockoutPenalty = match.getStage() != Match.Stage.GROUP
+                    && actualTeam1 == actualTeam2
+                    && match.getTeam1PenaltyScore() != null;
 
-                // Exact score bonus
+            if (isKnockoutPenalty) {
+                // Knockout match decided by penalties:
+                // +1 for correct penalty winner (replaces "correct result" point)
+                // +2 for exact score
                 if (predictedTeam1 == actualTeam1 && predictedTeam2 == actualTeam2) {
-                    points += EXACT_SCORE_POINTS;  // +2 for exact score (total +3)
+                    points += EXACT_SCORE_POINTS;  // +2 for exact score
+                }
+                // Penalty winner bonus
+                if (prediction.getPenaltyWinnerTeamId() != null) {
+                    Long actualPenWinnerTeamId = null;
+                    if (match.getTeam1PenaltyScore() > match.getTeam2PenaltyScore()) {
+                        actualPenWinnerTeamId = match.getTeam1().getId();
+                    } else if (match.getTeam2PenaltyScore() > match.getTeam1PenaltyScore()) {
+                        actualPenWinnerTeamId = match.getTeam2().getId();
+                    }
+                    if (actualPenWinnerTeamId != null && actualPenWinnerTeamId.equals(prediction.getPenaltyWinnerTeamId())) {
+                        points += MATCH_WINNER_POINTS;  // +1 for correct penalty winner
+                    }
+                }
+            } else {
+                // Regular match (group stage or knockout without penalties):
+                // +1 for correct result, +2 for exact score
+                if (actualResult.equals(predictedResult)) {
+                    points += MATCH_WINNER_POINTS;  // +1 for correct result
+
+                    // Exact score bonus
+                    if (predictedTeam1 == actualTeam1 && predictedTeam2 == actualTeam2) {
+                        points += EXACT_SCORE_POINTS;  // +2 for exact score (total +3)
+                    }
                 }
             }
 

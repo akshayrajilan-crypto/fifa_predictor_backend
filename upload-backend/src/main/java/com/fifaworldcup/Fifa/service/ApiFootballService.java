@@ -32,7 +32,7 @@ public class ApiFootballService {
     private String getApiKey() {
         if (apiKey != null && !apiKey.isBlank()) return apiKey;
         // TODO: Replace with your api-football.com key
-        return "";
+        return "e268e602805bf9fbc720ad5d4b7193b6";
     }
 
     private static final String BASE_URL = "https://v3.football.api-sports.io";

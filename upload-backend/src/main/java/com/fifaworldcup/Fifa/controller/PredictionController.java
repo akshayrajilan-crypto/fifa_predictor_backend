@@ -34,6 +34,17 @@ public class PredictionController {
         return ResponseEntity.ok(predictionService.getMyPredictions(userDetails.getUsername()));
     }
 
+    @GetMapping("/user/{username}")
+    public ResponseEntity<List<PredictionResponse>> getUserPredictions(
+            @PathVariable String username,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // Only admin can view other users' predictions
+        if (!userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return ResponseEntity.ok(predictionService.getMyPredictions(userDetails.getUsername()));
+        }
+        return ResponseEntity.ok(predictionService.getMyPredictions(username));
+    }
+
     @GetMapping("/match/{matchId}")
     public ResponseEntity<List<PredictionResponse>> getPredictionsForMatch(
             @PathVariable Long matchId,

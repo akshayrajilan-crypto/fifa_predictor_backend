@@ -50,6 +50,7 @@ public class Match {
     private MatchStatus status = MatchStatus.UPCOMING;
 
     @Builder.Default
+    @Column(columnDefinition = "boolean default false")
     private boolean omitted = false;
 
     public enum Stage {

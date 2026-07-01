@@ -56,6 +56,17 @@ public class AdminController {
         return ResponseEntity.ok(match.getTeam1().getName() + " vs " + match.getTeam2().getName() + " marked as " + status);
     }
 
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changeUserPassword(@RequestParam String username, @RequestParam String newPassword) {
+        com.fifaworldcup.Fifa.model.User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        org.springframework.security.crypto.password.PasswordEncoder passwordEncoder =
+                new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        return ResponseEntity.ok("Password changed for " + username);
+    }
+
     @PostMapping("/pull-results")
     public ResponseEntity<String> pullResultsFromAPI() {
         // Find all matches that should have ended (kickoff 2+ hours ago) and are not completed

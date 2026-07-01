@@ -17,12 +17,14 @@ public class AdminService {
     private final PredictionRepository predictionRepository;
     private final GoalScorerPredictionRepository goalScorerPredictionRepository;
     private final MotmPredictionRepository motmPredictionRepository;
+    private final MatchGoalScorerRepository matchGoalScorerRepository;
     private final UserRepository userRepository;
     private final KnockoutAdvancementService knockoutAdvancementService;
 
     private static final int MATCH_WINNER_POINTS = 1;       // Correct result (win/draw)
     private static final int EXACT_SCORE_POINTS = 2;        // Exact score (bonus on top of match winner)
     private static final int GOAL_SCORER_POINTS = 2;        // Per correct goal scorer
+    private static final int WRONG_SCORER_PENALTY = -2;     // Per wrong goal scorer prediction
     private static final int MOTM_POINTS = 3;               // Correct man of the match
     private static final int TOP_SCORER_POINTS = 4;         // Tournament top scorer
     private static final int GOLDEN_BALL_POINTS = 4;        // Tournament golden ball
@@ -93,13 +95,21 @@ public class AdminService {
         for (GoalScorerPrediction prediction : predictions) {
             int points = 0;
             Long predictedPlayerId = prediction.getPlayer().getId();
+            int predictedGoals = prediction.getPredictedGoals();
 
             if (actualGoalCounts.containsKey(predictedPlayerId)) {
                 int actualGoals = actualGoalCounts.get(predictedPlayerId);
-                int predictedGoals = prediction.getPredictedGoals();
-                // Award points multiplied by min(actual goals, predicted goals)
+                // Award points for correct goals
                 int goalsToReward = Math.min(actualGoals, predictedGoals);
                 points = GOAL_SCORER_POINTS * goalsToReward;
+                // Penalize over-predicted goals (predicted more than actual)
+                int wrongGoals = predictedGoals - actualGoals;
+                if (wrongGoals > 0) {
+                    points += WRONG_SCORER_PENALTY * wrongGoals;
+                }
+            } else {
+                // Player didn't score at all — penalize all predicted goals
+                points = WRONG_SCORER_PENALTY * predictedGoals;
             }
 
             prediction.setPointsEarned(points);
@@ -319,11 +329,51 @@ public class AdminService {
             // Score predictions
             calculateScorePoints(match);
 
-            // Score goal scorers if we have actual scorer data
-            if (match.getTeam1Score() != null) {
+            // Score goal scorers using actual scorer data from match_goal_scorers table
+            List<MatchGoalScorer> actualScorers = matchGoalScorerRepository.findByMatchOrderByMinuteAsc(match);
+            if (!actualScorers.isEmpty()) {
+                // Count actual goals per player name (exclude own goals)
+                java.util.Map<String, Integer> actualGoalsByName = new java.util.HashMap<>();
+                for (MatchGoalScorer gs : actualScorers) {
+                    if (!gs.isOwnGoal()) {
+                        actualGoalsByName.merge(gs.getPlayerName().toLowerCase(), 1, Integer::sum);
+                    }
+                }
+
                 List<GoalScorerPrediction> gsPreds = goalScorerPredictionRepository.findByMatchAndScored(match, false);
-                // We need the actual scorers from match_goal_scorers table - handled via submitMatchGoalScorers
-                // For recalculation, mark them as scored with 0 unless we have data
+                for (GoalScorerPrediction prediction : gsPreds) {
+                    int points = 0;
+                    String predictedPlayerName = prediction.getPlayer().getName().toLowerCase();
+                    int predictedGoals = prediction.getPredictedGoals();
+
+                    // Fuzzy match against actual scorers
+                    int actualGoals = 0;
+                    for (java.util.Map.Entry<String, Integer> entry : actualGoalsByName.entrySet()) {
+                        if (namesMatch(predictedPlayerName, entry.getKey())) {
+                            actualGoals = entry.getValue();
+                            break;
+                        }
+                    }
+
+                    if (actualGoals > 0) {
+                        int correctGoals = Math.min(actualGoals, predictedGoals);
+                        int wrongGoals = predictedGoals - correctGoals;
+                        points = (GOAL_SCORER_POINTS * correctGoals) + (WRONG_SCORER_PENALTY * wrongGoals);
+                    } else {
+                        // Player didn't score at all — penalize all predicted goals
+                        points = WRONG_SCORER_PENALTY * predictedGoals;
+                    }
+
+                    prediction.setPointsEarned(points);
+                    prediction.setScored(true);
+                    goalScorerPredictionRepository.save(prediction);
+
+                    if (points != 0) {
+                        User user = prediction.getUser();
+                        user.setTotalPoints(user.getTotalPoints() + points);
+                        userRepository.save(user);
+                    }
+                }
             }
 
             // Score MOTM

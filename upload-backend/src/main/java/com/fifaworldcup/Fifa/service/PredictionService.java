@@ -204,13 +204,8 @@ public class PredictionService {
     }
 
     // Tournament predictions lock when tournament starts (June 11, 2026)
-    private static final LocalDateTime TOURNAMENT_START = LocalDateTime.of(2026, 6, 11, 0, 0);
-
-    private void checkTournamentPredictionLock() {
-        if (LocalDateTime.now(ZoneId.of("America/New_York")).isAfter(TOURNAMENT_START)) {
-            throw new RuntimeException("Tournament predictions are locked. The World Cup has started.");
-        }
-    }
+    // Tournament prediction locking is now handled by TournamentSettingsService in the controller layer.
+    // No hardcoded lock needed here.
 
     public java.util.Map<String, Object> getMyTournamentPredictions(String username) {
         User user = userRepository.findByUsername(username)
@@ -234,13 +229,12 @@ public class PredictionService {
             result.put("worldCupWinner", java.util.Map.of("teamName", p.getTeam().getName(), "teamId", p.getTeam().getId()))
         );
 
-        result.put("locked", LocalDateTime.now(ZoneId.of("America/New_York")).isAfter(TOURNAMENT_START));
+        result.put("locked", false); // Lock status is now checked via /tournament-lock-status endpoint
 
         return result;
     }
 
     public void predictTopScorer(String username, SpecialPredictionRequest request) {
-        checkTournamentPredictionLock();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -253,7 +247,6 @@ public class PredictionService {
     }
 
     public void predictGoldenBall(String username, SpecialPredictionRequest request) {
-        checkTournamentPredictionLock();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -344,18 +337,13 @@ public class PredictionService {
 
     // ─── World Cup Winner Prediction ──────────────────────
 
-    private static final LocalDateTime GROUP_STAGE_END = LocalDateTime.of(2026, 6, 27, 23, 59);
+    // World Cup Winner lock is now handled by TournamentSettingsService in the controller layer.
 
     public void predictWorldCupWinner(String username, Long teamId) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new RuntimeException("Team not found"));
-
-        // Check if group stage is over
-        if (LocalDateTime.now(ZoneId.of("America/New_York")).isAfter(GROUP_STAGE_END)) {
-            throw new RuntimeException("World Cup Winner prediction is locked after group stage ends (June 27).");
-        }
 
         WorldCupWinnerPrediction prediction = worldCupWinnerPredictionRepository.findByUser(user)
                 .orElse(WorldCupWinnerPrediction.builder().user(user).build());
@@ -366,7 +354,6 @@ public class PredictionService {
     // ─── Golden Glove Prediction ──────────────────────────
 
     public void predictGoldenGlove(String username, SpecialPredictionRequest request) {
-        checkTournamentPredictionLock();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 

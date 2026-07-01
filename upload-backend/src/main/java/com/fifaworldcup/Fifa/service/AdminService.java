@@ -22,9 +22,9 @@ public class AdminService {
     private final KnockoutAdvancementService knockoutAdvancementService;
 
     private static final int MATCH_WINNER_POINTS = 1;       // Correct result (win/draw)
-    private static final int EXACT_SCORE_POINTS = 2;        // Exact score (bonus on top of match winner)
-    private static final int GOAL_SCORER_POINTS = 2;        // Per correct goal scorer
-    private static final int WRONG_SCORER_PENALTY = -2;     // Per wrong goal scorer prediction
+    private static final int EXACT_SCORE_POINTS = 3;        // Exact score (bonus on top of match winner)
+    private static final int GOAL_SCORER_POINTS = 3;        // Per correct goal scorer
+    private static final int WRONG_SCORER_PENALTY = -1;     // Per wrong goal scorer prediction
     private static final int MOTM_POINTS = 3;               // Correct man of the match
     private static final int TOP_SCORER_POINTS = 4;         // Tournament top scorer
     private static final int GOLDEN_BALL_POINTS = 4;        // Tournament golden ball
@@ -321,11 +321,13 @@ public class AdminService {
             motmPredictionRepository.save(p);
         }
 
-        // Re-score all completed matches
+        // Re-score all completed matches (skip omitted)
         List<Match> completedMatches = matchRepository.findByStatus(Match.MatchStatus.COMPLETED);
         int matchesScored = 0;
 
         for (Match match : completedMatches) {
+            // Skip omitted matches
+            if (match.isOmitted()) continue;
             // Score predictions
             calculateScorePoints(match);
 

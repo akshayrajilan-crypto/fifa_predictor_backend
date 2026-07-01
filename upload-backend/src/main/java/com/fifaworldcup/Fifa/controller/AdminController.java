@@ -46,6 +46,16 @@ public class AdminController {
     private static final int GOLDEN_GLOVE_BONUS = 4;
     private static final int WORLD_CUP_WINNER_BONUS = 5;
 
+    @PostMapping("/match/{matchId}/omit")
+    public ResponseEntity<String> toggleOmitMatch(@PathVariable Long matchId) {
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new RuntimeException("Match not found"));
+        match.setOmitted(!match.isOmitted());
+        matchRepository.save(match);
+        String status = match.isOmitted() ? "omitted" : "restored";
+        return ResponseEntity.ok(match.getTeam1().getName() + " vs " + match.getTeam2().getName() + " marked as " + status);
+    }
+
     @PostMapping("/pull-results")
     public ResponseEntity<String> pullResultsFromAPI() {
         // Find all matches that should have ended (kickoff 2+ hours ago) and are not completed

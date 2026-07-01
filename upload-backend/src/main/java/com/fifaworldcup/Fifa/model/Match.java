@@ -49,6 +49,9 @@ public class Match {
     @Enumerated(EnumType.STRING)
     private MatchStatus status = MatchStatus.UPCOMING;
 
+    @Builder.Default
+    private boolean omitted = false;
+
     public enum Stage {
         GROUP, ROUND_OF_32, ROUND_OF_16, QUARTER_FINAL, SEMI_FINAL, THIRD_PLACE, FINAL
     }

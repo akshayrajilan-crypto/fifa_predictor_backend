@@ -32,7 +32,7 @@ public class LeaderboardService {
 
             List<Prediction> predictions = predictionRepository.findByUser(user);
             int correctScores = (int) predictions.stream()
-                    .filter(p -> p.getPointsEarned() == 3)  // exact score = 1 (result) + 2 (exact) = 3
+                    .filter(p -> p.getPointsEarned() == 4)  // exact score = 1 (result) + 3 (exact) = 4
                     .count();
             int correctResults = (int) predictions.stream()
                     .filter(p -> p.getPointsEarned() == 1)  // correct result only = 1
@@ -72,12 +72,12 @@ public class LeaderboardService {
                 detail.put("predicted", p.getPredictedTeam1Score() + "-" + p.getPredictedTeam2Score());
                 detail.put("actual", p.getMatch().getTeam1Score() + "-" + p.getMatch().getTeam2Score());
                 detail.put("points", p.getPointsEarned());
-                if (p.getPointsEarned() == 3) {
-                    detail.put("type", "Exact Score (+1 Result +2 Exact)");
-                    // Exact score includes 1 for result + 2 for exact
+                if (p.getPointsEarned() == 4) {
+                    detail.put("type", "Exact Score (+1 Result +3 Exact)");
+                    // Exact score includes 1 for result + 3 for exact
                     matchResultPoints += 1;
                     matchResultCount++;
-                    exactScorePoints += 2;
+                    exactScorePoints += 3;
                     exactScoreCount++;
                 } else {
                     detail.put("type", "Correct Result");

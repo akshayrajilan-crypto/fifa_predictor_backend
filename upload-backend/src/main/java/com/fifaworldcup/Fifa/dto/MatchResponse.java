@@ -25,4 +25,5 @@ public class MatchResponse {
     private Integer team2PenaltyScore;
     private String status;
     private boolean predictionLocked;
+    private boolean omitted;
 }

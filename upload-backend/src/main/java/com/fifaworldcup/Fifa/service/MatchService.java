@@ -162,6 +162,7 @@ public class MatchService {
                 .team2PenaltyScore(match.getTeam2PenaltyScore())
                 .status(match.getStatus().name())
                 .predictionLocked(matchTimeIST.isBefore(LocalDateTime.now(IST)))
+                .omitted(match.isOmitted())
                 .build();
     }
 }

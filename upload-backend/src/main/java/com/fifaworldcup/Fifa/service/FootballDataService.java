@@ -38,9 +38,9 @@ public class FootballDataService {
     private static final String WC_COMPETITION_CODE = "WC";
 
     private static final int MATCH_WINNER_POINTS = 1;       // Correct result (win/draw)
-    private static final int EXACT_SCORE_POINTS = 2;        // Exact score bonus (on top of match winner = +3 total)
-    private static final int GOAL_SCORER_POINTS = 2;        // Per correct goal scorer
-    private static final int WRONG_SCORER_PENALTY = -2;     // Per wrong goal scorer prediction
+    private static final int EXACT_SCORE_POINTS = 3;        // Exact score bonus (on top of match winner = +4 total)
+    private static final int GOAL_SCORER_POINTS = 3;        // Per correct goal scorer
+    private static final int WRONG_SCORER_PENALTY = -1;     // Per wrong goal scorer prediction
 
     /**
      * Fetches results for a specific match from the API and updates the database.

@@ -34,6 +34,17 @@ public class PredictionController {
         return ResponseEntity.ok(predictionService.getMyPredictions(userDetails.getUsername()));
     }
 
+    @GetMapping("/user/{username}")
+    public ResponseEntity<List<PredictionResponse>> getUserPredictions(
+            @PathVariable String username,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        // Only admin can view other users' predictions
+        if (!userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return ResponseEntity.ok(predictionService.getMyPredictions(userDetails.getUsername()));
+        }
+        return ResponseEntity.ok(predictionService.getMyPredictions(username));
+    }
+
     @GetMapping("/match/{matchId}")
     public ResponseEntity<List<PredictionResponse>> getPredictionsForMatch(
             @PathVariable Long matchId,
@@ -118,6 +129,19 @@ public class PredictionController {
     public ResponseEntity<List<java.util.Map<String, Object>>> getMotmPredictionsForMatch(
             @PathVariable Long matchId) {
         return ResponseEntity.ok(predictionService.getMotmPredictionsForMatch(matchId));
+    }
+
+    @GetMapping("/motm/my/{matchId}")
+    public ResponseEntity<java.util.Map<String, Object>> getMyMotmPrediction(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long matchId) {
+        return ResponseEntity.ok(predictionService.getMyMotmPrediction(userDetails.getUsername(), matchId));
+    }
+
+    @GetMapping("/motm/my-all")
+    public ResponseEntity<List<java.util.Map<String, Object>>> getAllMyMotmPredictions(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(predictionService.getAllMyMotmPredictions(userDetails.getUsername()));
     }
 
     @PostMapping("/world-cup-winner")

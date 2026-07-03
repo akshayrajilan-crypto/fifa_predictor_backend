@@ -67,6 +67,16 @@ public class AdminController {
         return ResponseEntity.ok("Password changed for " + username);
     }
 
+    @PostMapping("/edit-match-score")
+    public ResponseEntity<String> editMatchScore(@RequestParam Long matchId, @RequestParam int team1Score, @RequestParam int team2Score) {
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new RuntimeException("Match not found"));
+        match.setTeam1Score(team1Score);
+        match.setTeam2Score(team2Score);
+        matchRepository.save(match);
+        return ResponseEntity.ok("Score updated: " + match.getTeam1().getName() + " " + team1Score + " - " + team2Score + " " + match.getTeam2().getName());
+    }
+
     @PostMapping("/pull-results")
     public ResponseEntity<String> pullResultsFromAPI() {
         // Find all matches that should have ended (kickoff 2+ hours ago) and are not completed

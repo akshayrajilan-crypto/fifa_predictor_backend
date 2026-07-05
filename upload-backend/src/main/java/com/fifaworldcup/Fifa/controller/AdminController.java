@@ -68,12 +68,25 @@ public class AdminController {
     }
 
     @PostMapping("/edit-match-score")
-    public ResponseEntity<String> editMatchScore(@RequestParam Long matchId, @RequestParam int team1Score, @RequestParam int team2Score) {
+    public ResponseEntity<String> editMatchScore(
+            @RequestParam Long matchId,
+            @RequestParam int team1Score,
+            @RequestParam int team2Score,
+            @RequestParam(required = false) Integer team1PenaltyScore,
+            @RequestParam(required = false) Integer team2PenaltyScore) {
         Match match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new RuntimeException("Match not found"));
         match.setTeam1Score(team1Score);
         match.setTeam2Score(team2Score);
+        match.setStatus(Match.MatchStatus.COMPLETED);
+        if (team1PenaltyScore != null && team2PenaltyScore != null) {
+            match.setTeam1PenaltyScore(team1PenaltyScore);
+            match.setTeam2PenaltyScore(team2PenaltyScore);
+        }
         matchRepository.save(match);
+        if (match.getStage() != Match.Stage.GROUP) {
+            adminService.advanceWinnerForMatch(match);
+        }
         return ResponseEntity.ok("Score updated: " + match.getTeam1().getName() + " " + team1Score + " - " + team2Score + " " + match.getTeam2().getName());
     }
 

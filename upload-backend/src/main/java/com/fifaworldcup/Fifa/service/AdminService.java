@@ -245,6 +245,10 @@ public class AdminService {
         });
     }
 
+    public void advanceWinnerForMatch(Match match) {
+        knockoutAdvancementService.advanceWinner(match);
+    }
+
     public java.util.Map<String, Object> getUserPredictionsForAdmin(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));

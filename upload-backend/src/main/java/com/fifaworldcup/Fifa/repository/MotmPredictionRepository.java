@@ -10,7 +10,6 @@ import java.util.Optional;
 
 public interface MotmPredictionRepository extends JpaRepository<MotmPrediction, Long> {
     Optional<MotmPrediction> findByUserAndMatch(User user, Match match);
-    List<MotmPrediction> findByMatch(Match match);
     List<MotmPrediction> findByMatchAndScored(Match match, boolean scored);
     List<MotmPrediction> findByUser(User user);
 }

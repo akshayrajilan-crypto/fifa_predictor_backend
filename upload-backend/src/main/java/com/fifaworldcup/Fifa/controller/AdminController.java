@@ -74,8 +74,7 @@ public class AdminController {
         match.setTeam1Score(team1Score);
         match.setTeam2Score(team2Score);
         matchRepository.save(match);
-        adminService.recalculateMatchPoints(matchId);
-        return ResponseEntity.ok("Score updated and points recalculated: " + match.getTeam1().getName() + " " + team1Score + " - " + team2Score + " " + match.getTeam2().getName());
+        return ResponseEntity.ok("Score updated: " + match.getTeam1().getName() + " " + team1Score + " - " + team2Score + " " + match.getTeam2().getName());
     }
 
     @PostMapping("/pull-results")
@@ -129,8 +128,7 @@ public class AdminController {
 
             match = matchRepository.findById(matchId).orElse(match);
             if (match.getStatus() == Match.MatchStatus.COMPLETED) {
-                adminService.recalculateMatchPoints(matchId);
-                return ResponseEntity.ok("Match result pulled and points recalculated: " +
+                return ResponseEntity.ok("Match result pulled: " +
                         match.getTeam1().getName() + " " + match.getTeam1Score() +
                         " - " + match.getTeam2Score() + " " + match.getTeam2().getName());
             } else {

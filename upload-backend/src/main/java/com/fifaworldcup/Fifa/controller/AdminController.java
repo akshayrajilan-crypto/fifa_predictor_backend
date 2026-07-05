@@ -410,4 +410,14 @@ public class AdminController {
         tournamentSettingsService.unlock();
         return ResponseEntity.ok(java.util.Map.of("message", "Tournament predictions unlocked."));
     }
+
+    /**
+     * Ensures QF/SF/Final placeholder matches exist and sets known R16 teams.
+     * Safe to call multiple times — idempotent.
+     */
+    @PostMapping("/setup-bracket")
+    public ResponseEntity<String> setupBracket() {
+        String result = adminService.setupBracket();
+        return ResponseEntity.ok(result);
+    }
 }

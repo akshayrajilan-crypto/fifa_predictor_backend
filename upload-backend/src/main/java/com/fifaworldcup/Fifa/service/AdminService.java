@@ -249,6 +249,22 @@ public class AdminService {
         knockoutAdvancementService.advanceWinner(match);
     }
 
+    @Transactional
+    public String fixCompletedBracket() {
+        List<Match> completed = matchRepository.findByStatus(Match.MatchStatus.COMPLETED);
+        int advanced = 0;
+        for (Match match : completed) {
+            if (match.getStage() == Match.Stage.GROUP) continue;
+            try {
+                knockoutAdvancementService.advanceWinner(match);
+                advanced++;
+            } catch (Exception e) {
+                // skip if target match not found
+            }
+        }
+        return "Re-advanced winners for " + advanced + " completed knockout matches.";
+    }
+
     public java.util.Map<String, Object> getUserPredictionsForAdmin(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));

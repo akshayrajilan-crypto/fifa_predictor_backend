@@ -433,4 +433,10 @@ public class AdminController {
         String result = adminService.setupBracket();
         return ResponseEntity.ok(result);
     }
+
+    @PostMapping("/fix-bracket")
+    public ResponseEntity<String> fixCompletedBracket() {
+        String result = adminService.fixCompletedBracket();
+        return ResponseEntity.ok(result);
+    }
 }

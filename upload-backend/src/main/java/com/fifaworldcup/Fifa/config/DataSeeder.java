@@ -330,8 +330,43 @@ public class DataSeeder implements CommandLineRunner {
         // Match 96 - July 7: Winner M85 vs Winner M88
         createPlaceholderMatch("2026-07-07T21:00", "BC Place, Vancouver", Match.Stage.ROUND_OF_16);
 
-        System.out.println("✅ Database seeded: 48 teams, 72 group + 16 R32 + 8 R16 matches, admin user created.");
-        System.out.println("   Results loaded: Mexico 2-0 SA, S.Korea 2-1 Czechia | R32: Canada 1-0 South Africa");
+        // ============================================================
+        // QUARTER FINALS (July 9 - July 11) — Placeholder matches
+        // ============================================================
+
+        // Match 97 - July 9: Winner M89 vs Winner M90
+        createPlaceholderMatch("2026-07-09T16:00", "Dallas Stadium (AT&T)", Match.Stage.QUARTER_FINAL);
+
+        // Match 98 - July 9: Winner M91 vs Winner M92
+        createPlaceholderMatch("2026-07-09T20:00", "Los Angeles Stadium (SoFi)", Match.Stage.QUARTER_FINAL);
+
+        // Match 99 - July 10: Winner M93 vs Winner M94
+        createPlaceholderMatch("2026-07-10T16:00", "New York New Jersey Stadium (MetLife)", Match.Stage.QUARTER_FINAL);
+
+        // Match 100 - July 11: Winner M95 vs Winner M96
+        createPlaceholderMatch("2026-07-11T16:00", "Miami Stadium (Hard Rock)", Match.Stage.QUARTER_FINAL);
+
+        // ============================================================
+        // SEMI FINALS (July 14 - July 15)
+        // ============================================================
+
+        // Match 101 - July 14: Winner M97 vs Winner M98
+        createPlaceholderMatch("2026-07-14T20:00", "Dallas Stadium (AT&T)", Match.Stage.SEMI_FINAL);
+
+        // Match 102 - July 15: Winner M99 vs Winner M100
+        createPlaceholderMatch("2026-07-15T20:00", "New York New Jersey Stadium (MetLife)", Match.Stage.SEMI_FINAL);
+
+        // ============================================================
+        // THIRD PLACE & FINAL (July 18 - July 19)
+        // ============================================================
+
+        // Match 103 - July 18: Loser M101 vs Loser M102
+        createPlaceholderMatch("2026-07-18T16:00", "Miami Stadium (Hard Rock)", Match.Stage.THIRD_PLACE);
+
+        // Match 104 - July 19: Winner M101 vs Winner M102
+        createPlaceholderMatch("2026-07-19T20:00", "New York New Jersey Stadium (MetLife)", Match.Stage.FINAL);
+
+        System.out.println("✅ Database seeded: 48 teams, 72 group + 16 R32 + 8 R16 + 4 QF + 2 SF + 1 3rd place + 1 Final matches, admin user created.");
     }
 
     private Team createTeam(String name, String group, String countryCode) {

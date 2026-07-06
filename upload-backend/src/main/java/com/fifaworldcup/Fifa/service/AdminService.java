@@ -153,11 +153,34 @@ public class AdminService {
         String predictedResult = getResult(predictedTeam1, predictedTeam2);
 
         if (actualResult.equals(predictedResult)) {
-            points += MATCH_WINNER_POINTS;  // +1 for correct result
+            points += MATCH_WINNER_POINTS;
 
-            // Exact score bonus
             if (predictedTeam1 == actualTeam1 && predictedTeam2 == actualTeam2) {
-                points += EXACT_SCORE_POINTS;  // +2 for exact score (total +3)
+                points += EXACT_SCORE_POINTS;
+            }
+        }
+
+        // Knockout penalty: also award +1 if user predicted the correct winner in regular time
+        boolean isKnockoutPenalty = match.getStage() != Match.Stage.GROUP
+                && actualTeam1 == actualTeam2
+                && match.getTeam1PenaltyScore() != null;
+
+        if (isKnockoutPenalty) {
+            Long actualPenWinnerTeamId = null;
+            if (match.getTeam1PenaltyScore() > match.getTeam2PenaltyScore()) {
+                actualPenWinnerTeamId = match.getTeam1().getId();
+            } else if (match.getTeam2PenaltyScore() > match.getTeam1PenaltyScore()) {
+                actualPenWinnerTeamId = match.getTeam2().getId();
+            }
+            if (actualPenWinnerTeamId != null) {
+                boolean predictedPenWinner = prediction.getPenaltyWinnerTeamId() != null
+                        && actualPenWinnerTeamId.equals(prediction.getPenaltyWinnerTeamId());
+                boolean predictedCorrectWinner = predictedTeam1 != predictedTeam2
+                        && ((actualPenWinnerTeamId.equals(match.getTeam1().getId()) && predictedTeam1 > predictedTeam2)
+                        ||  (actualPenWinnerTeamId.equals(match.getTeam2().getId()) && predictedTeam2 > predictedTeam1));
+                if ((predictedPenWinner || predictedCorrectWinner) && points == 0) {
+                    points += MATCH_WINNER_POINTS;
+                }
             }
         }
 

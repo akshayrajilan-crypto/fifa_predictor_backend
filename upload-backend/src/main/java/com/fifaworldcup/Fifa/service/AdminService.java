@@ -177,19 +177,19 @@ public class AdminService {
                 .replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
         if (a.equals(b)) return true;
         if (a.contains(b) || b.contains(a)) return true;
-        // Check surname match — compare FIRST part (surname) if format is "SURNAME First"
-        // or LAST part if format is "First Surname"
         String[] partsA = a.split("\\s+");
         String[] partsB = b.split("\\s+");
-        // Try matching first parts (surname-first format like "MERINO Mikel")
-        if (partsA[0].equals(partsB[0]) && partsA[0].length() > 3) return true;
-        // Try matching last parts (first-last format like "Mikel Merino")
-        String lastA = partsA[partsA.length - 1];
-        String lastB = partsB[partsB.length - 1];
-        if (lastA.equals(lastB) && lastA.length() > 4) return true;
-        // Cross-match: first of one matches last of other (handles mixed formats)
-        if (partsA[0].equals(lastB) && partsA[0].length() > 4) return true;
-        if (partsB[0].equals(lastA) && partsB[0].length() > 4) return true;
+        if (partsA.length < 2 || partsB.length < 2) return false;
+        // Match if surnames match (first part in "SURNAME First" or last part in "First Surname")
+        // Require BOTH a surname AND first-name component to overlap
+        String surnameA1 = partsA[0]; String firstA = partsA[partsA.length - 1];
+        String surnameB1 = partsB[0]; String firstB = partsB[partsB.length - 1];
+        // Same format: "MERINO Mikel" vs "MERINO Mikel"
+        if (surnameA1.equals(surnameB1) && surnameA1.length() > 3) return true;
+        if (firstA.equals(firstB) && firstA.length() > 5) return true;
+        // Cross format: "Mikel Merino" vs "MERINO Mikel" → A's last = B's first AND A's first = B's last
+        if (firstA.equals(surnameB1) && surnameA1.equals(firstB) && firstA.length() > 3) return true;
+        if (firstB.equals(surnameA1) && surnameB1.equals(firstA) && firstB.length() > 3) return true;
         return false;
     }
 

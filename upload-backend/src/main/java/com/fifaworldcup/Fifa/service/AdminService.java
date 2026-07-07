@@ -200,12 +200,21 @@ public class AdminService {
         String b = java.text.Normalizer.normalize(name2.toLowerCase().trim(), java.text.Normalizer.Form.NFD)
                 .replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
         if (a.equals(b)) return true;
-        // Check last name match
+        if (a.contains(b) || b.contains(a)) return true;
         String[] partsA = a.split("\\s+");
         String[] partsB = b.split("\\s+");
-        String lastA = partsA[partsA.length - 1];
-        String lastB = partsB[partsB.length - 1];
-        return lastA.equals(lastB) && lastA.length() > 3;
+        if (partsA.length < 2 || partsB.length < 2) return false;
+        // Match if surnames match (first part in "SURNAME First" or last part in "First Surname")
+        // Require BOTH a surname AND first-name component to overlap
+        String surnameA1 = partsA[0]; String firstA = partsA[partsA.length - 1];
+        String surnameB1 = partsB[0]; String firstB = partsB[partsB.length - 1];
+        // Same format: "MERINO Mikel" vs "MERINO Mikel"
+        if (surnameA1.equals(surnameB1) && surnameA1.length() > 3) return true;
+        if (firstA.equals(firstB) && firstA.length() > 5) return true;
+        // Cross format: "Mikel Merino" vs "MERINO Mikel" → A's last = B's first AND A's first = B's last
+        if (firstA.equals(surnameB1) && surnameA1.equals(firstB) && firstA.length() > 3) return true;
+        if (firstB.equals(surnameA1) && surnameB1.equals(firstA) && firstB.length() > 3) return true;
+        return false;
     }
 
     /**

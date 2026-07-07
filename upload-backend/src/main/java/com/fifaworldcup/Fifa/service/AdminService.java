@@ -176,12 +176,21 @@ public class AdminService {
         String b = java.text.Normalizer.normalize(name2.toLowerCase().trim(), java.text.Normalizer.Form.NFD)
                 .replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
         if (a.equals(b)) return true;
-        // Check last name match
+        if (a.contains(b) || b.contains(a)) return true;
+        // Check surname match — compare FIRST part (surname) if format is "SURNAME First"
+        // or LAST part if format is "First Surname"
         String[] partsA = a.split("\\s+");
         String[] partsB = b.split("\\s+");
+        // Try matching first parts (surname-first format like "MERINO Mikel")
+        if (partsA[0].equals(partsB[0]) && partsA[0].length() > 3) return true;
+        // Try matching last parts (first-last format like "Mikel Merino")
         String lastA = partsA[partsA.length - 1];
         String lastB = partsB[partsB.length - 1];
-        return lastA.equals(lastB) && lastA.length() > 3;
+        if (lastA.equals(lastB) && lastA.length() > 4) return true;
+        // Cross-match: first of one matches last of other (handles mixed formats)
+        if (partsA[0].equals(lastB) && partsA[0].length() > 4) return true;
+        if (partsB[0].equals(lastA) && partsB[0].length() > 4) return true;
+        return false;
     }
 
     /**

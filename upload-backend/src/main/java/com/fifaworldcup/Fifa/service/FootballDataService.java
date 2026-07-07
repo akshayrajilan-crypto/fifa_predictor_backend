@@ -407,12 +407,20 @@ public class FootballDataService {
         String a = stripAccents(name1.toLowerCase().trim());
         String b = stripAccents(name2.toLowerCase().trim());
         if (a.equals(b)) return true;
-        // Check if last name matches
+        if (a.contains(b) || b.contains(a)) return true;
+        // Check surname match
         String[] partsA = a.split("\\s+");
         String[] partsB = b.split("\\s+");
+        // First parts (surname-first format like "MERINO Mikel")
+        if (partsA[0].equals(partsB[0]) && partsA[0].length() > 3) return true;
+        // Last parts (first-last format like "Mikel Merino")
         String lastA = partsA[partsA.length - 1];
         String lastB = partsB[partsB.length - 1];
-        return lastA.equals(lastB) && lastA.length() > 3;
+        if (lastA.equals(lastB) && lastA.length() > 4) return true;
+        // Cross-match (mixed formats)
+        if (partsA[0].equals(lastB) && partsA[0].length() > 4) return true;
+        if (partsB[0].equals(lastA) && partsB[0].length() > 4) return true;
+        return false;
     }
 
     private String stripAccents(String input) {

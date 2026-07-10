@@ -77,6 +77,35 @@ public class AdminController {
         return ResponseEntity.ok("Score updated: " + match.getTeam1().getName() + " " + team1Score + " - " + team2Score + " " + match.getTeam2().getName());
     }
 
+    @PostMapping("/edit-match-details")
+    public ResponseEntity<String> editMatchDetails(@RequestBody java.util.Map<String, Object> body) {
+        Long matchId = ((Number) body.get("matchId")).longValue();
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new RuntimeException("Match not found"));
+
+        if (body.containsKey("team1Id") && body.get("team1Id") != null) {
+            Long team1Id = ((Number) body.get("team1Id")).longValue();
+            com.fifaworldcup.Fifa.model.Team team1 = new com.fifaworldcup.Fifa.model.Team();
+            team1.setId(team1Id);
+            match.setTeam1(team1);
+        }
+        if (body.containsKey("team2Id") && body.get("team2Id") != null) {
+            Long team2Id = ((Number) body.get("team2Id")).longValue();
+            com.fifaworldcup.Fifa.model.Team team2 = new com.fifaworldcup.Fifa.model.Team();
+            team2.setId(team2Id);
+            match.setTeam2(team2);
+        }
+        if (body.containsKey("matchDateTime") && body.get("matchDateTime") != null) {
+            match.setMatchDateTime(java.time.LocalDateTime.parse((String) body.get("matchDateTime")));
+        }
+        if (body.containsKey("venue") && body.get("venue") != null) {
+            match.setVenue((String) body.get("venue"));
+        }
+
+        matchRepository.save(match);
+        return ResponseEntity.ok("Match details updated");
+    }
+
     @PostMapping("/pull-results")
     public ResponseEntity<String> pullResultsFromAPI() {
         // Find all matches that should have ended (kickoff 2+ hours ago) and are not completed

@@ -19,10 +19,22 @@ public class MatchController {
 
     private final MatchService matchService;
     private final MatchGoalScorerRepository matchGoalScorerRepository;
+    private final com.fifaworldcup.Fifa.repository.TeamRepository teamRepository;
 
     @GetMapping
     public ResponseEntity<List<MatchResponse>> getAllMatches() {
         return ResponseEntity.ok(matchService.getAllMatches());
+    }
+
+    @GetMapping("/teams")
+    public ResponseEntity<List<Map<String, Object>>> getAllTeams() {
+        return ResponseEntity.ok(teamRepository.findAll().stream().map(t -> {
+            Map<String, Object> m = new java.util.LinkedHashMap<>();
+            m.put("id", t.getId());
+            m.put("name", t.getName());
+            m.put("group", t.getGroup());
+            return m;
+        }).toList());
     }
 
     @GetMapping("/{id}")

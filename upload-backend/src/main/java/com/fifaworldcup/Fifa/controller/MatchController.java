@@ -20,6 +20,7 @@ public class MatchController {
     private final MatchService matchService;
     private final MatchGoalScorerRepository matchGoalScorerRepository;
     private final com.fifaworldcup.Fifa.repository.TeamRepository teamRepository;
+    private final com.fifaworldcup.Fifa.repository.MatchRepository matchRepository;
 
     @GetMapping
     public ResponseEntity<List<MatchResponse>> getAllMatches() {

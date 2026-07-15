@@ -56,6 +56,25 @@ public class AdminController {
         return ResponseEntity.ok(match.getTeam1().getName() + " vs " + match.getTeam2().getName() + " marked as " + status);
     }
 
+    @PostMapping("/match/{matchId}/prize")
+    public ResponseEntity<String> togglePrizeMatch(@PathVariable Long matchId) {
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new RuntimeException("Match not found"));
+        match.setPrizeMatch(!match.isPrizeMatch());
+        matchRepository.save(match);
+        return ResponseEntity.ok(match.getTeam1().getName() + " vs " + match.getTeam2().getName() + (match.isPrizeMatch() ? " marked as prize match" : " removed from prize matches"));
+    }
+
+    @PostMapping("/match/{matchId}/prize-winner")
+    public ResponseEntity<String> setPrizeWinner(@PathVariable Long matchId, @RequestParam String winner) {
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new RuntimeException("Match not found"));
+        match.setPrizeMatch(true);
+        match.setPrizeWinner(winner);
+        matchRepository.save(match);
+        return ResponseEntity.ok("Prize winner set: " + winner + " for " + match.getTeam1().getName() + " vs " + match.getTeam2().getName());
+    }
+
     @PostMapping("/change-password")
     public ResponseEntity<String> changeUserPassword(@RequestParam String username, @RequestParam String newPassword) {
         com.fifaworldcup.Fifa.model.User user = userRepository.findByUsername(username)

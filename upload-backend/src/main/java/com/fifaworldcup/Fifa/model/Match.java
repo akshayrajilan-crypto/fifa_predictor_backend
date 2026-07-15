@@ -53,6 +53,12 @@ public class Match {
     @Column(columnDefinition = "boolean default false")
     private boolean omitted = false;
 
+    @Builder.Default
+    @Column(columnDefinition = "boolean default false")
+    private boolean prizeMatch = false;
+
+    private String prizeWinner; // username of prize winner (set by admin)
+
     public enum Stage {
         GROUP, ROUND_OF_32, ROUND_OF_16, QUARTER_FINAL, SEMI_FINAL, THIRD_PLACE, FINAL
     }

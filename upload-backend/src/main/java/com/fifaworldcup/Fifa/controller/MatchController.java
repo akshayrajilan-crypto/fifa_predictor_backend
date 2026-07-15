@@ -37,6 +37,25 @@ public class MatchController {
         }).toList());
     }
 
+    @GetMapping("/prize-winners")
+    public ResponseEntity<List<Map<String, Object>>> getPrizeWinners() {
+        List<Match> prizeMatches = matchRepository.findAll().stream()
+                .filter(Match::isPrizeMatch)
+                .filter(m -> m.getPrizeWinner() != null && !m.getPrizeWinner().isBlank())
+                .toList();
+        return ResponseEntity.ok(prizeMatches.stream().map(m -> {
+            Map<String, Object> map = new java.util.LinkedHashMap<>();
+            map.put("matchId", m.getId());
+            map.put("team1", m.getTeam1() != null ? m.getTeam1().getName() : "TBD");
+            map.put("team2", m.getTeam2() != null ? m.getTeam2().getName() : "TBD");
+            map.put("team1Score", m.getTeam1Score());
+            map.put("team2Score", m.getTeam2Score());
+            map.put("winner", m.getPrizeWinner());
+            map.put("stage", m.getStage().name());
+            return map;
+        }).toList());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<MatchResponse> getMatch(@PathVariable Long id) {
         return ResponseEntity.ok(matchService.getMatchById(id));

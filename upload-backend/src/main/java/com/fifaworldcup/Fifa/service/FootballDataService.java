@@ -306,21 +306,31 @@ public class FootballDataService {
 
             if (isKnockoutPenalty) {
                 // Knockout match decided by penalties:
-                // +1 for correct penalty winner (replaces "correct result" point)
+                // +1 for predicting the correct winner (either via penalty winner or by predicting them to win)
                 // +2 for exact score
                 if (predictedTeam1 == actualTeam1 && predictedTeam2 == actualTeam2) {
                     points += EXACT_SCORE_POINTS;  // +2 for exact score
                 }
-                // Penalty winner bonus
-                if (prediction.getPenaltyWinnerTeamId() != null) {
-                    Long actualPenWinnerTeamId = null;
-                    if (match.getTeam1PenaltyScore() > match.getTeam2PenaltyScore()) {
-                        actualPenWinnerTeamId = match.getTeam1().getId();
-                    } else if (match.getTeam2PenaltyScore() > match.getTeam1PenaltyScore()) {
-                        actualPenWinnerTeamId = match.getTeam2().getId();
-                    }
-                    if (actualPenWinnerTeamId != null && actualPenWinnerTeamId.equals(prediction.getPenaltyWinnerTeamId())) {
-                        points += MATCH_WINNER_POINTS;  // +1 for correct penalty winner
+
+                // Determine actual penalty winner
+                Long actualPenWinnerTeamId = null;
+                if (match.getTeam1PenaltyScore() > match.getTeam2PenaltyScore()) {
+                    actualPenWinnerTeamId = match.getTeam1().getId();
+                } else if (match.getTeam2PenaltyScore() > match.getTeam1PenaltyScore()) {
+                    actualPenWinnerTeamId = match.getTeam2().getId();
+                }
+
+                if (actualPenWinnerTeamId != null) {
+                    // +1 if they explicitly predicted the penalty winner
+                    boolean predictedPenWinner = prediction.getPenaltyWinnerTeamId() != null
+                            && actualPenWinnerTeamId.equals(prediction.getPenaltyWinnerTeamId());
+                    // +1 if they predicted the correct team to win in regular time (e.g. 2-1)
+                    boolean predictedCorrectWinner = predictedTeam1 != predictedTeam2
+                            && ((actualPenWinnerTeamId.equals(match.getTeam1().getId()) && predictedTeam1 > predictedTeam2)
+                            ||  (actualPenWinnerTeamId.equals(match.getTeam2().getId()) && predictedTeam2 > predictedTeam1));
+
+                    if (predictedPenWinner || predictedCorrectWinner) {
+                        points += MATCH_WINNER_POINTS;  // +1 for correct winner
                     }
                 }
             } else {

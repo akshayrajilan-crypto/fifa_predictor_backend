@@ -87,12 +87,25 @@ public class AdminController {
     }
 
     @PostMapping("/edit-match-score")
-    public ResponseEntity<String> editMatchScore(@RequestParam Long matchId, @RequestParam int team1Score, @RequestParam int team2Score) {
+    public ResponseEntity<String> editMatchScore(
+            @RequestParam Long matchId,
+            @RequestParam int team1Score,
+            @RequestParam int team2Score,
+            @RequestParam(required = false) Integer team1PenaltyScore,
+            @RequestParam(required = false) Integer team2PenaltyScore) {
         Match match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new RuntimeException("Match not found"));
         match.setTeam1Score(team1Score);
         match.setTeam2Score(team2Score);
+        match.setStatus(Match.MatchStatus.COMPLETED);
+        if (team1PenaltyScore != null && team2PenaltyScore != null) {
+            match.setTeam1PenaltyScore(team1PenaltyScore);
+            match.setTeam2PenaltyScore(team2PenaltyScore);
+        }
         matchRepository.save(match);
+        if (match.getStage() != Match.Stage.GROUP) {
+            adminService.advanceWinnerForMatch(match);
+        }
         return ResponseEntity.ok("Score updated: " + match.getTeam1().getName() + " " + team1Score + " - " + team2Score + " " + match.getTeam2().getName());
     }
 
@@ -470,5 +483,19 @@ public class AdminController {
     public ResponseEntity<?> revokeWinnerAnnouncement() {
         tournamentSettingsService.revokeWinnerAnnouncement();
         return ResponseEntity.ok(java.util.Map.of("message", "Winner announcement revoked."));
+    /**
+     * Ensures QF/SF/Final placeholder matches exist and sets known R16 teams.
+     * Safe to call multiple times — idempotent.
+     */
+    @PostMapping("/setup-bracket")
+    public ResponseEntity<String> setupBracket() {
+        String result = adminService.setupBracket();
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/fix-bracket")
+    public ResponseEntity<String> fixCompletedBracket() {
+        String result = adminService.fixCompletedBracket();
+        return ResponseEntity.ok(result);
     }
 }

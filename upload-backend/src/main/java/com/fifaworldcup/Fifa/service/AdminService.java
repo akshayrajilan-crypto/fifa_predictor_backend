@@ -14,6 +14,7 @@ import java.util.List;
 public class AdminService {
 
     private final MatchRepository matchRepository;
+    private final TeamRepository teamRepository;
     private final PredictionRepository predictionRepository;
     private final GoalScorerPredictionRepository goalScorerPredictionRepository;
     private final MotmPredictionRepository motmPredictionRepository;
@@ -152,11 +153,34 @@ public class AdminService {
         String predictedResult = getResult(predictedTeam1, predictedTeam2);
 
         if (actualResult.equals(predictedResult)) {
-            points += MATCH_WINNER_POINTS;  // +1 for correct result
+            points += MATCH_WINNER_POINTS;
 
-            // Exact score bonus
             if (predictedTeam1 == actualTeam1 && predictedTeam2 == actualTeam2) {
-                points += EXACT_SCORE_POINTS;  // +2 for exact score (total +3)
+                points += EXACT_SCORE_POINTS;
+            }
+        }
+
+        // Knockout penalty: also award +1 if user predicted the correct winner in regular time
+        boolean isKnockoutPenalty = match.getStage() != Match.Stage.GROUP
+                && actualTeam1 == actualTeam2
+                && match.getTeam1PenaltyScore() != null;
+
+        if (isKnockoutPenalty) {
+            Long actualPenWinnerTeamId = null;
+            if (match.getTeam1PenaltyScore() > match.getTeam2PenaltyScore()) {
+                actualPenWinnerTeamId = match.getTeam1().getId();
+            } else if (match.getTeam2PenaltyScore() > match.getTeam1PenaltyScore()) {
+                actualPenWinnerTeamId = match.getTeam2().getId();
+            }
+            if (actualPenWinnerTeamId != null) {
+                boolean predictedPenWinner = prediction.getPenaltyWinnerTeamId() != null
+                        && actualPenWinnerTeamId.equals(prediction.getPenaltyWinnerTeamId());
+                boolean predictedCorrectWinner = predictedTeam1 != predictedTeam2
+                        && ((actualPenWinnerTeamId.equals(match.getTeam1().getId()) && predictedTeam1 > predictedTeam2)
+                        ||  (actualPenWinnerTeamId.equals(match.getTeam2().getId()) && predictedTeam2 > predictedTeam1));
+                if ((predictedPenWinner || predictedCorrectWinner) && points == 0) {
+                    points += MATCH_WINNER_POINTS;
+                }
             }
         }
 
@@ -194,8 +218,85 @@ public class AdminService {
     }
 
     /**
-     * Returns all scored predictions for a user grouped by type, for admin editing.
+     * Ensures QF/SF/3rd/Final placeholder matches exist (IDs 97-104)
+     * and sets known R16 teams (Argentina/Egypt on M95, Portugal/Spain on M93).
+     * Idempotent — safe to call multiple times.
      */
+    @Transactional
+    public String setupBracket() {
+        StringBuilder log = new StringBuilder();
+
+        Object[][] placeholders = {
+            {97L,  "2026-07-11T14:00", "Dallas Stadium (AT&T)",                   "QUARTER_FINAL"},
+            {98L,  "2026-07-11T18:00", "Atlanta Stadium (Mercedes-Benz)",          "QUARTER_FINAL"},
+            {99L,  "2026-07-12T14:00", "Los Angeles Stadium (SoFi)",              "QUARTER_FINAL"},
+            {100L, "2026-07-12T18:00", "New York New Jersey Stadium (MetLife)",   "QUARTER_FINAL"},
+            {101L, "2026-07-15T15:00", "Houston Stadium (NRG)",                   "SEMI_FINAL"},
+            {102L, "2026-07-16T15:00", "San Francisco Bay Area Stadium (Levi's)", "SEMI_FINAL"},
+            {103L, "2026-07-19T15:00", "Miami Stadium (Hard Rock)",               "THIRD_PLACE"},
+            {104L, "2026-07-19T19:00", "MetLife Stadium (New York)",              "FINAL"},
+        };
+
+        for (Object[] p : placeholders) {
+            Long id = (Long) p[0];
+            if (matchRepository.findById(id).isEmpty()) {
+                matchRepository.save(Match.builder()
+                        .matchDateTime(java.time.LocalDateTime.parse((String) p[1]))
+                        .venue((String) p[2])
+                        .stage(Match.Stage.valueOf((String) p[3]))
+                        .status(Match.MatchStatus.UPCOMING)
+                        .build());
+                log.append("Created placeholder match ").append(id).append("\n");
+            } else {
+                log.append("Match ").append(id).append(" already exists\n");
+            }
+        }
+
+        setTeamOnMatch(95L, "Argentina", true, log);
+        setTeamOnMatch(95L, "Egypt",     false, log);
+        setTeamOnMatch(93L, "Portugal",  true, log);
+        setTeamOnMatch(93L, "Spain",     false, log);
+
+        return log.toString();
+    }
+
+    private void setTeamOnMatch(Long matchId, String teamName, boolean isTeam1, StringBuilder log) {
+        matchRepository.findById(matchId).ifPresent(m -> {
+            if (isTeam1 ? m.getTeam1() != null : m.getTeam2() != null) {
+                log.append(teamName).append(" already set on M").append(matchId).append("\n");
+                return;
+            }
+            teamRepository.findAll().stream()
+                .filter(t -> t.getName().equalsIgnoreCase(teamName))
+                .findFirst()
+                .ifPresent(t -> {
+                    if (isTeam1) m.setTeam1(t); else m.setTeam2(t);
+                    matchRepository.save(m);
+                    log.append("Set ").append(teamName).append(" on M").append(matchId).append("\n");
+                });
+        });
+    }
+
+    public void advanceWinnerForMatch(Match match) {
+        knockoutAdvancementService.advanceWinner(match);
+    }
+
+    @Transactional
+    public String fixCompletedBracket() {
+        List<Match> completed = matchRepository.findByStatus(Match.MatchStatus.COMPLETED);
+        int advanced = 0;
+        for (Match match : completed) {
+            if (match.getStage() == Match.Stage.GROUP) continue;
+            try {
+                knockoutAdvancementService.advanceWinner(match);
+                advanced++;
+            } catch (Exception e) {
+                // skip if target match not found
+            }
+        }
+        return "Re-advanced winners for " + advanced + " completed knockout matches.";
+    }
+
     public java.util.Map<String, Object> getUserPredictionsForAdmin(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));

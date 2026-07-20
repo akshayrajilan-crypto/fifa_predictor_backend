@@ -73,4 +73,26 @@ public class TournamentSettingsService {
         settings.setTournamentPredictionsLocked(false);
         return settingsRepository.save(settings);
     }
+
+    /**
+     * Admin: announce the tournament winner.
+     */
+    public void announceWinner() {
+        TournamentSettings settings = getSettings();
+        settings.setWinnerAnnounced(true);
+        settingsRepository.save(settings);
+    }
+
+    /**
+     * Admin: revoke winner announcement.
+     */
+    public void revokeWinnerAnnouncement() {
+        TournamentSettings settings = getSettings();
+        settings.setWinnerAnnounced(false);
+        settingsRepository.save(settings);
+    }
+
+    public boolean isWinnerAnnounced() {
+        return getSettings().isWinnerAnnounced();
+    }
 }

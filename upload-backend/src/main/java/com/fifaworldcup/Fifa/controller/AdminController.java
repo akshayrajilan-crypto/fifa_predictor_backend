@@ -433,7 +433,8 @@ public class AdminController {
         return ResponseEntity.ok(java.util.Map.of(
                 "tournamentPredictionLockTime", settings.getTournamentPredictionLockTime() != null ? settings.getTournamentPredictionLockTime().toString() : "",
                 "tournamentPredictionsLocked", settings.isTournamentPredictionsLocked(),
-                "isCurrentlyLocked", tournamentSettingsService.areTournamentPredictionsLocked()
+                "isCurrentlyLocked", tournamentSettingsService.areTournamentPredictionsLocked(),
+                "winnerAnnounced", settings.isWinnerAnnounced()
         ));
     }
 
@@ -457,5 +458,17 @@ public class AdminController {
     public ResponseEntity<?> unlockTournamentPredictions() {
         tournamentSettingsService.unlock();
         return ResponseEntity.ok(java.util.Map.of("message", "Tournament predictions unlocked."));
+    }
+
+    @PostMapping("/announce-winner")
+    public ResponseEntity<?> announceWinner() {
+        tournamentSettingsService.announceWinner();
+        return ResponseEntity.ok(java.util.Map.of("message", "Tournament winner announced! Popup will show for all users."));
+    }
+
+    @PostMapping("/revoke-winner-announcement")
+    public ResponseEntity<?> revokeWinnerAnnouncement() {
+        tournamentSettingsService.revokeWinnerAnnouncement();
+        return ResponseEntity.ok(java.util.Map.of("message", "Winner announcement revoked."));
     }
 }

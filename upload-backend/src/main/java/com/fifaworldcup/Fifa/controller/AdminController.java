@@ -483,6 +483,8 @@ public class AdminController {
     public ResponseEntity<?> revokeWinnerAnnouncement() {
         tournamentSettingsService.revokeWinnerAnnouncement();
         return ResponseEntity.ok(java.util.Map.of("message", "Winner announcement revoked."));
+    }
+
     /**
      * Ensures QF/SF/Final placeholder matches exist and sets known R16 teams.
      * Safe to call multiple times — idempotent.

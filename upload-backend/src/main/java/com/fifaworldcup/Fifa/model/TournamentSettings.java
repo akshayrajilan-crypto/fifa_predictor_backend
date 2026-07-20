@@ -29,4 +29,11 @@ public class TournamentSettings {
      */
     @Builder.Default
     private boolean tournamentPredictionsLocked = false;
+
+    /**
+     * If true, the tournament winner has been announced and the winner popup shows.
+     */
+    @Builder.Default
+    @Column(columnDefinition = "boolean default false")
+    private boolean winnerAnnounced = false;
 }

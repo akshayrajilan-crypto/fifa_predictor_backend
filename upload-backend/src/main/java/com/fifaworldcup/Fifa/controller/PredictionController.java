@@ -160,7 +160,8 @@ public class PredictionController {
         var settings = tournamentSettingsService.getSettings();
         return ResponseEntity.ok(java.util.Map.of(
                 "locked", tournamentSettingsService.areTournamentPredictionsLocked(),
-                "lockTime", settings.getTournamentPredictionLockTime() != null ? settings.getTournamentPredictionLockTime().toString() : ""
+                "lockTime", settings.getTournamentPredictionLockTime() != null ? settings.getTournamentPredictionLockTime().toString() : "",
+                "winnerAnnounced", settings.isWinnerAnnounced()
         ));
     }
 }
